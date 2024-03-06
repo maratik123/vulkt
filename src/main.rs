@@ -1,3 +1,7 @@
+use vulkt::hello_triangle_application::HelloTriangleApplication;
+
 fn main() {
-    println!("Hello, world!");
+    let app = HelloTriangleApplication;
+
+    app.run();
 }
