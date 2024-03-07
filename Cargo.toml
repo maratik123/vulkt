@@ -7,8 +7,10 @@ edition = "2021"
 opt-level = 1
 
 [dependencies]
+anyhow = "1"
 glam = "0.25"
 log = "0.4"
+thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 vulkano = "0.34"
