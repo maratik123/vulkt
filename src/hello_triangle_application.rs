@@ -25,13 +25,13 @@ impl HelloTriangleApplication {
     pub fn new(validate: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
         let instance = init_vulkan(&event_loop, validate)?;
-        let _debug_utils_messenger = if validate {
+        let debug_utils_messenger = if validate {
             Some(setup_debug_messenger(instance.clone())?)
         } else {
             None
         };
         let app = Self {
-            _debug_utils_messenger,
+            _debug_utils_messenger: debug_utils_messenger,
             instance,
             window: Arc::new(window),
             event_loop,
