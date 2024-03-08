@@ -8,6 +8,7 @@ opt-level = 1
 
 [dependencies]
 anyhow = "1"
+clap = { version = "4", features = ["derive"] }
 glam = "0.25"
 thiserror = "1"
 tracing = "0.1"

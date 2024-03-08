@@ -12,4 +12,6 @@ pub enum AppError {
     Vulkan(#[from] Validated<VulkanError>),
     #[error("can not parse str: {0:?}")]
     ParseInt(#[from] ParseIntError),
+    #[error("has not required layers")]
+    RequiredLayers,
 }
