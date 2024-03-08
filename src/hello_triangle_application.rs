@@ -107,7 +107,7 @@ fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<
     }
     info!("required extensions: {required_extensions:?}");
 
-    if enabled!(Level::DEBUG) {
+    if enabled!(Level::INFO) {
         let supported_extensions = library.supported_extensions();
         debug!("available extensions: {supported_extensions:?}");
 
