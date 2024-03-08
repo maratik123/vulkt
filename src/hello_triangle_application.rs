@@ -2,7 +2,7 @@ use crate::app_result::{AppError, AppResult};
 use std::collections::HashSet;
 use std::iter;
 use std::sync::{Arc, OnceLock};
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, enabled, error, info, trace, warn, Level};
 use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
@@ -101,17 +101,21 @@ fn init_vulkan(
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
     let library = VulkanLibrary::new()?;
 
-    let supported_extensions = library.supported_extensions();
-    debug!("available extensions: {supported_extensions:?}");
-
     let mut required_extensions = Surface::required_extensions(&event_loop);
     if validate {
         required_extensions.ext_debug_utils = true;
     }
     info!("required extensions: {required_extensions:?}");
 
-    let unavailable_required_extensions = required_extensions - *supported_extensions;
-    info!("unavailable required extensions: {unavailable_required_extensions:?}");
+    if enabled!(Level::DEBUG) {
+        let supported_extensions = library.supported_extensions();
+        debug!("available extensions: {supported_extensions:?}");
+
+        info!(
+            "unavailable required extensions: {:?}",
+            required_extensions - *supported_extensions
+        );
+    }
 
     let mut instance_create_info = InstanceCreateInfo {
         engine_name: Some("No Engine".to_string()),
@@ -139,6 +143,8 @@ fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<
                 iter::once(first_diff).chain(diff_it).collect::<Vec<_>>()
             );
             return Err(AppError::RequiredLayers);
+        } else {
+            info!("all required layers satisfied");
         }
 
         instance_create_info = InstanceCreateInfo {
