@@ -1,5 +1,6 @@
 use crate::app_result::{AppError, AppResult};
 use std::collections::HashSet;
+use std::iter;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, error, info, trace, warn};
 use vulkano::instance::debug::{
@@ -24,19 +25,14 @@ pub struct HelloTriangleApplication {
 impl HelloTriangleApplication {
     pub fn new(validate: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
-        let instance = init_vulkan(&event_loop, validate)?;
-        let debug_utils_messenger = if validate {
-            Some(setup_debug_messenger(instance.clone())?)
-        } else {
-            None
-        };
-        let app = Self {
+        let (instance, debug_utils_messenger) = init_vulkan(&event_loop, validate)?;
+
+        Ok(Self {
             _debug_utils_messenger: debug_utils_messenger,
             instance,
             window: Arc::new(window),
             event_loop,
-        };
-        Ok(app)
+        })
     }
 
     pub fn run(self) {
@@ -69,7 +65,7 @@ const HEIGHT: i32 = 600;
 fn validation_layers() -> &'static HashSet<String> {
     static VALIDATION_LAYERS: OnceLock<HashSet<String>> = OnceLock::new();
     VALIDATION_LAYERS.get_or_init(|| {
-        ["VK_LAYER_KHRONOS_validation"]
+        ["VK_LAYER_KHRONOS_validation", "aa"]
             .into_iter()
             .map(|s| s.to_string())
             .collect()
@@ -89,8 +85,17 @@ fn init_window() -> AppResult<(EventLoop<()>, Window)> {
     Ok((event_loop, window))
 }
 
-fn init_vulkan(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
-    create_instance(event_loop, validate)
+fn init_vulkan(
+    event_loop: &EventLoop<()>,
+    validate: bool,
+) -> AppResult<(Arc<Instance>, Option<DebugUtilsMessenger>)> {
+    let instance = create_instance(event_loop, validate)?;
+    let debug_utils_messenger = if validate {
+        Some(setup_debug_messenger(instance.clone())?)
+    } else {
+        None
+    };
+    Ok((instance, debug_utils_messenger))
 }
 
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
@@ -127,14 +132,11 @@ fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<
         let required_layers = validation_layers();
         info!("required layers: {required_layers:?}");
 
-        if required_layers
-            .difference(&available_layers)
-            .next()
-            .is_some()
-        {
+        let mut diff_it = required_layers.difference(&available_layers);
+        if let Some(first_diff) = diff_it.next() {
             error!(
                 "unavailable required layers: {:?}",
-                required_layers.difference(&available_layers)
+                iter::once(first_diff).chain(diff_it).collect::<Vec<_>>()
             );
             return Err(AppError::RequiredLayers);
         }
