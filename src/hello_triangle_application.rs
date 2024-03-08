@@ -65,7 +65,7 @@ const HEIGHT: i32 = 600;
 fn validation_layers() -> &'static HashSet<String> {
     static VALIDATION_LAYERS: OnceLock<HashSet<String>> = OnceLock::new();
     VALIDATION_LAYERS.get_or_init(|| {
-        ["VK_LAYER_KHRONOS_validation", "aa"]
+        ["VK_LAYER_KHRONOS_validation"]
             .into_iter()
             .map(|s| s.to_string())
             .collect()
