@@ -15,10 +15,10 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 pub struct HelloTriangleApplication {
-    event_loop: EventLoop<()>,
-    window: Arc<Window>,
-    instance: Arc<Instance>,
     _debug_utils_messenger: Option<DebugUtilsMessenger>,
+    instance: Arc<Instance>,
+    window: Arc<Window>,
+    event_loop: EventLoop<()>,
 }
 
 impl HelloTriangleApplication {
@@ -31,10 +31,10 @@ impl HelloTriangleApplication {
             None
         };
         let app = Self {
-            event_loop,
-            window: Arc::new(window),
-            instance,
             _debug_utils_messenger,
+            instance,
+            window: Arc::new(window),
+            event_loop,
         };
         Ok(app)
     }
@@ -139,10 +139,11 @@ fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<
             return Err(AppError::RequiredLayers);
         }
 
-        instance_create_info.enabled_layers = required_layers.iter().cloned().collect();
-
-        instance_create_info.debug_utils_messengers =
-            vec![populate_debug_utils_messenger_create_info()];
+        instance_create_info = InstanceCreateInfo {
+            enabled_layers: required_layers.iter().cloned().collect(),
+            debug_utils_messengers: vec![populate_debug_utils_messenger_create_info()],
+            ..instance_create_info
+        };
     }
 
     Ok(Instance::new(library, instance_create_info)?)
