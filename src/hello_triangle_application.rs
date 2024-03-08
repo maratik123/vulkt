@@ -1,29 +1,35 @@
 use crate::app_result::AppResult;
 use std::sync::Arc;
+use vulkano::instance::{Instance, InstanceCreateInfo};
+use vulkano::swapchain::Surface;
+use vulkano::{Version, VulkanLibrary};
 use winit::dpi::PhysicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
+const WIDTH: i32 = 800;
+const HEIGHT: i32 = 600;
+
 pub struct HelloTriangleApplication {
     event_loop: EventLoop<()>,
     window: Arc<Window>,
+    instance: Arc<Instance>,
 }
-
-const WIDTH: i32 = 800;
-const HEIGHT: i32 = 600;
 
 impl HelloTriangleApplication {
     pub fn new() -> AppResult<HelloTriangleApplication> {
         let (event_loop, window) = HelloTriangleApplication::init_window()?;
-        Ok(HelloTriangleApplication {
+        let instance = HelloTriangleApplication::init_vulkan(&event_loop)?;
+        let app = HelloTriangleApplication {
             event_loop,
             window: Arc::new(window),
-        })
+            instance,
+        };
+        Ok(app)
     }
 
     pub fn run(self) {
-        self.init_vulkan();
         self.main_loop();
     }
 
@@ -40,7 +46,23 @@ impl HelloTriangleApplication {
         Ok((event_loop, window))
     }
 
-    fn init_vulkan(&self) {}
+    fn init_vulkan(event_loop: &EventLoop<()>) -> AppResult<Arc<Instance>> {
+        HelloTriangleApplication::create_instance(event_loop)
+    }
+
+    fn create_instance(event_loop: &EventLoop<()>) -> AppResult<Arc<Instance>> {
+        let library = VulkanLibrary::new()?;
+        let required_extensions = Surface::required_extensions(&event_loop);
+        Ok(Instance::new(
+            library,
+            InstanceCreateInfo {
+                engine_name: Some("No Engine".to_string()),
+                engine_version: Version::V1_0,
+                enabled_extensions: required_extensions,
+                ..InstanceCreateInfo::application_from_cargo_toml()
+            },
+        )?)
+    }
 
     fn main_loop(self) {
         self.event_loop.run(move |event, _, control_flow| {
