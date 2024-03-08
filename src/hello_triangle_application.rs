@@ -1,6 +1,7 @@
 use crate::app_result::AppResult;
 use std::sync::Arc;
-use vulkano::instance::{Instance, InstanceCreateInfo};
+use tracing::{debug, info};
+use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
 use vulkano::swapchain::Surface;
 use vulkano::{Version, VulkanLibrary};
 use winit::dpi::PhysicalSize;
@@ -52,13 +53,19 @@ impl HelloTriangleApplication {
 
     fn create_instance(event_loop: &EventLoop<()>) -> AppResult<Arc<Instance>> {
         let library = VulkanLibrary::new()?;
+        let supported_extensions = library.supported_extensions();
+        debug!("available extensions: {supported_extensions:?}");
         let required_extensions = Surface::required_extensions(&event_loop);
+        info!("required extensions: {required_extensions:?}");
+        let unavailable_required_extensions = required_extensions - *supported_extensions;
+        info!("unavailable required extensions: {unavailable_required_extensions:?}");
         Ok(Instance::new(
             library,
             InstanceCreateInfo {
                 engine_name: Some("No Engine".to_string()),
                 engine_version: Version::V1_0,
                 enabled_extensions: required_extensions,
+                flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
                 ..InstanceCreateInfo::application_from_cargo_toml()
             },
         )?)
