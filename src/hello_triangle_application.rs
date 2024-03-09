@@ -7,7 +7,7 @@ use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
 };
-use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo};
+use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
 use vulkano::swapchain::Surface;
 use vulkano::{Version, VulkanLibrary};
 use winit::dpi::PhysicalSize;
@@ -101,10 +101,10 @@ fn init_vulkan(
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
     let library = VulkanLibrary::new()?;
 
-    let mut required_extensions = Surface::required_extensions(&event_loop);
-    if validate {
-        required_extensions.ext_debug_utils = true;
-    }
+    let required_extensions = InstanceExtensions {
+        ext_debug_utils: validate,
+        ..Surface::required_extensions(&event_loop)
+    };
     info!("required extensions: {required_extensions:?}");
 
     if enabled!(Level::INFO) {
