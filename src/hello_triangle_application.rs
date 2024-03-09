@@ -62,14 +62,11 @@ impl HelloTriangleApplication {
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 600;
 
+const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
+
 fn validation_layers() -> &'static HashSet<String> {
-    static VALIDATION_LAYERS: OnceLock<HashSet<String>> = OnceLock::new();
-    VALIDATION_LAYERS.get_or_init(|| {
-        ["VK_LAYER_KHRONOS_validation"]
-            .into_iter()
-            .map(|s| s.to_string())
-            .collect()
-    })
+    static VALIDATION_LAYERS_LOCK: OnceLock<HashSet<String>> = OnceLock::new();
+    VALIDATION_LAYERS_LOCK.get_or_init(|| VALIDATION_LAYERS.iter().map(|s| s.to_string()).collect())
 }
 
 fn init_window() -> AppResult<(EventLoop<()>, Window)> {
