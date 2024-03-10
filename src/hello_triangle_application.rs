@@ -77,7 +77,6 @@ impl HelloTriangleApplication {
 #[derive(Default)]
 struct QueueFamilyIndicesBuilder {
     graphics_family: Option<u32>,
-    _ne: NonExhaustive,
 }
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -94,20 +93,16 @@ impl QueueFamilyIndicesBuilder {
 
 fn find_queue_families(physical_device: &Arc<PhysicalDevice>) -> Option<QueueFamilyIndices> {
     let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
-    let mut result = None;
     for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
         if prop.queue_flags.contains(QueueFlags::GRAPHICS) {
-            queue_family_indices = QueueFamilyIndicesBuilder {
-                graphics_family: Some(i as u32),
-                ..queue_family_indices
-            };
-            result = queue_family_indices.build();
-            if result.is_some() {
-                break;
+            queue_family_indices.graphics_family = Some(i as u32);
+
+            if let queue_family_indices @ Some(_) = queue_family_indices.build() {
+                return queue_family_indices;
             }
         }
     }
-    result
+    None
 }
 
 fn pick_physical_device(
@@ -304,6 +299,3 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
         })
     }
 }
-
-#[derive(Clone, Copy, Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Default)]
-struct NonExhaustive;
