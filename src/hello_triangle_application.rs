@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use std::iter;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, enabled, error, info, trace, warn, Level};
+use vulkano::device::physical::PhysicalDevice;
+use vulkano::device::QueueFlags;
 use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
@@ -16,6 +18,7 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 pub struct HelloTriangleApplication {
+    physical_device: Arc<PhysicalDevice>,
     _debug_utils_messenger: Option<DebugUtilsMessenger>,
     instance: Arc<Instance>,
     window: Arc<Window>,
@@ -25,9 +28,11 @@ pub struct HelloTriangleApplication {
 impl HelloTriangleApplication {
     pub fn new(validate: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
-        let (instance, debug_utils_messenger) = init_vulkan(&event_loop, validate)?;
+        let (instance, debug_utils_messenger, physical_device) =
+            init_vulkan(&event_loop, validate)?;
 
         Ok(Self {
+            physical_device,
             _debug_utils_messenger: debug_utils_messenger,
             instance,
             window: Arc::new(window),
@@ -59,6 +64,47 @@ impl HelloTriangleApplication {
     }
 }
 
+#[derive(Default)]
+struct QueueFamilyIndices {
+    graphics_family: Option<u32>,
+    _ne: NonExhaustive,
+}
+
+impl QueueFamilyIndices {
+    fn is_complete(&self) -> bool {
+        self.graphics_family.is_some()
+    }
+}
+
+fn find_queue_families(physical_device: &Arc<PhysicalDevice>) -> QueueFamilyIndices {
+    let mut queue_family_indices = QueueFamilyIndices::default();
+    for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
+        if prop.queue_flags.contains(QueueFlags::GRAPHICS) {
+            queue_family_indices = QueueFamilyIndices {
+                graphics_family: Some(i as u32),
+                ..queue_family_indices
+            };
+            if queue_family_indices.is_complete() {
+                break;
+            }
+        }
+    }
+    queue_family_indices
+}
+
+fn pick_physical_device(instance: Arc<Instance>) -> AppResult<Arc<PhysicalDevice>> {
+    instance
+        .enumerate_physical_devices()?
+        .find(is_device_suitable)
+        .ok_or(AppError::PhysicalDevices)
+}
+
+fn is_device_suitable(physical_device: &Arc<PhysicalDevice>) -> bool {
+    let queue_family_indices = find_queue_families(physical_device);
+
+    queue_family_indices.is_complete()
+}
+
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 600;
 
@@ -85,14 +131,20 @@ fn init_window() -> AppResult<(EventLoop<()>, Window)> {
 fn init_vulkan(
     event_loop: &EventLoop<()>,
     validate: bool,
-) -> AppResult<(Arc<Instance>, Option<DebugUtilsMessenger>)> {
+) -> AppResult<(
+    Arc<Instance>,
+    Option<DebugUtilsMessenger>,
+    Arc<PhysicalDevice>,
+)> {
     let instance = create_instance(event_loop, validate)?;
     let debug_utils_messenger = if validate {
         Some(setup_debug_messenger(instance.clone())?)
     } else {
         None
     };
-    Ok((instance, debug_utils_messenger))
+    let physical_device = pick_physical_device(instance.clone())?;
+
+    Ok((instance, debug_utils_messenger, physical_device))
 }
 
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
@@ -207,3 +259,6 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
         })
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+struct NonExhaustive;
