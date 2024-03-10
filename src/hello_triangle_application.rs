@@ -4,7 +4,7 @@ use std::iter;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, enabled, error, info, trace, warn, Level};
 use vulkano::device::physical::PhysicalDevice;
-use vulkano::device::QueueFlags;
+use vulkano::device::{Device, DeviceCreateInfo, Features, Queue, QueueCreateInfo, QueueFlags};
 use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
@@ -18,6 +18,8 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 pub struct HelloTriangleApplication {
+    graphics_queue: Arc<Queue>,
+    device: Arc<Device>,
     physical_device: Arc<PhysicalDevice>,
     _debug_utils_messenger: Option<DebugUtilsMessenger>,
     instance: Arc<Instance>,
@@ -28,10 +30,18 @@ pub struct HelloTriangleApplication {
 impl HelloTriangleApplication {
     pub fn new(validate: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
-        let (instance, debug_utils_messenger, physical_device) =
-            init_vulkan(&event_loop, validate)?;
+        let InitVulkanResult {
+            instance,
+            debug_utils_messenger,
+            physical_device,
+            device,
+            graphics_queue,
+            ..
+        } = init_vulkan(&event_loop, validate)?;
 
         Ok(Self {
+            graphics_queue,
+            device,
             physical_device,
             _debug_utils_messenger: debug_utils_messenger,
             instance,
@@ -65,44 +75,51 @@ impl HelloTriangleApplication {
 }
 
 #[derive(Default)]
-struct QueueFamilyIndices {
+struct QueueFamilyIndicesBuilder {
     graphics_family: Option<u32>,
     _ne: NonExhaustive,
 }
 
-impl QueueFamilyIndices {
-    fn is_complete(&self) -> bool {
-        self.graphics_family.is_some()
+#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+struct QueueFamilyIndices {
+    graphics_family: u32,
+}
+
+impl QueueFamilyIndicesBuilder {
+    fn build(&self) -> Option<QueueFamilyIndices> {
+        self.graphics_family
+            .map(|graphics_family| QueueFamilyIndices { graphics_family })
     }
 }
 
-fn find_queue_families(physical_device: &Arc<PhysicalDevice>) -> QueueFamilyIndices {
-    let mut queue_family_indices = QueueFamilyIndices::default();
+fn find_queue_families(physical_device: &Arc<PhysicalDevice>) -> Option<QueueFamilyIndices> {
+    let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
+    let mut result = None;
     for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
         if prop.queue_flags.contains(QueueFlags::GRAPHICS) {
-            queue_family_indices = QueueFamilyIndices {
+            queue_family_indices = QueueFamilyIndicesBuilder {
                 graphics_family: Some(i as u32),
                 ..queue_family_indices
             };
-            if queue_family_indices.is_complete() {
+            result = queue_family_indices.build();
+            if result.is_some() {
                 break;
             }
         }
     }
-    queue_family_indices
+    result
 }
 
-fn pick_physical_device(instance: Arc<Instance>) -> AppResult<Arc<PhysicalDevice>> {
+fn pick_physical_device(
+    instance: Arc<Instance>,
+) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
-        .find(is_device_suitable)
+        .find_map(|physical_device| {
+            find_queue_families(&physical_device)
+                .map(|queue_family_indices| (physical_device, queue_family_indices))
+        })
         .ok_or(AppError::PhysicalDevices)
-}
-
-fn is_device_suitable(physical_device: &Arc<PhysicalDevice>) -> bool {
-    let queue_family_indices = find_queue_families(physical_device);
-
-    queue_family_indices.is_complete()
 }
 
 const WIDTH: i32 = 800;
@@ -128,23 +145,51 @@ fn init_window() -> AppResult<(EventLoop<()>, Window)> {
     Ok((event_loop, window))
 }
 
-fn init_vulkan(
-    event_loop: &EventLoop<()>,
-    validate: bool,
-) -> AppResult<(
-    Arc<Instance>,
-    Option<DebugUtilsMessenger>,
-    Arc<PhysicalDevice>,
-)> {
+struct InitVulkanResult {
+    graphics_queue: Arc<Queue>,
+    device: Arc<Device>,
+    physical_device: Arc<PhysicalDevice>,
+    debug_utils_messenger: Option<DebugUtilsMessenger>,
+    instance: Arc<Instance>,
+}
+
+fn init_vulkan(event_loop: &EventLoop<()>, validate: bool) -> AppResult<InitVulkanResult> {
     let instance = create_instance(event_loop, validate)?;
     let debug_utils_messenger = if validate {
         Some(setup_debug_messenger(instance.clone())?)
     } else {
         None
     };
-    let physical_device = pick_physical_device(instance.clone())?;
+    let (physical_device, queue_family_indices) = pick_physical_device(instance.clone())?;
+    let (device, graphics_queue) =
+        create_logical_device(physical_device.clone(), queue_family_indices)?;
 
-    Ok((instance, debug_utils_messenger, physical_device))
+    Ok(InitVulkanResult {
+        instance,
+        debug_utils_messenger,
+        physical_device,
+        device,
+        graphics_queue,
+    })
+}
+
+fn create_logical_device(
+    physical_device: Arc<PhysicalDevice>,
+    queue_family_indices: QueueFamilyIndices,
+) -> AppResult<(Arc<Device>, Arc<Queue>)> {
+    let queue_create_info = QueueCreateInfo {
+        queue_family_index: queue_family_indices.graphics_family,
+        queues: vec![1.0],
+        ..QueueCreateInfo::default()
+    };
+    let device_features = Features::default();
+    let device_create_info = DeviceCreateInfo {
+        queue_create_infos: vec![queue_create_info],
+        enabled_features: device_features,
+        ..DeviceCreateInfo::default()
+    };
+    let (device, mut queues) = Device::new(physical_device, device_create_info)?;
+    Ok((device, queues.next().ok_or(AppError::QueueForDevice)?))
 }
 
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
@@ -260,5 +305,5 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Default)]
 struct NonExhaustive;

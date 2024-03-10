@@ -18,4 +18,6 @@ pub enum AppError {
     RequiredLayers,
     #[error("failed to find a suitable physical device")]
     PhysicalDevices,
+    #[error("failed to get a queue for logical device")]
+    QueueForDevice,
 }
