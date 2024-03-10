@@ -18,11 +18,11 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 pub struct HelloTriangleApplication {
-    graphics_queue: Arc<Queue>,
-    device: Arc<Device>,
-    physical_device: Arc<PhysicalDevice>,
+    _graphics_queue: Arc<Queue>,
+    _device: Arc<Device>,
+    _physical_device: Arc<PhysicalDevice>,
     _debug_utils_messenger: Option<DebugUtilsMessenger>,
-    instance: Arc<Instance>,
+    _instance: Arc<Instance>,
     window: Arc<Window>,
     event_loop: EventLoop<()>,
 }
@@ -40,11 +40,11 @@ impl HelloTriangleApplication {
         } = init_vulkan(&event_loop, validate)?;
 
         Ok(Self {
-            graphics_queue,
-            device,
-            physical_device,
+            _graphics_queue: graphics_queue,
+            _device: device,
+            _physical_device: physical_device,
             _debug_utils_messenger: debug_utils_messenger,
-            instance,
+            _instance: instance,
             window: Arc::new(window),
             event_loop,
         })
