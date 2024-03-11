@@ -1,4 +1,4 @@
-use crate::app_result::{AppError, AppResult, QueueType};
+use crate::app_result::{AppError, AppResult, QueueFamilyType};
 use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::iter;
@@ -207,6 +207,7 @@ fn init_vulkan(
         device,
         graphics_queue,
         present_queue,
+        ..
     } = create_logical_device(physical_device.clone(), queue_family_indices)?;
 
     Ok(InitVulkanResult {
@@ -257,7 +258,7 @@ fn create_logical_device(
     fn find_queue<'a>(
         queues: impl IntoIterator<Item = &'a Arc<Queue>>,
         queue_family_index: u32,
-        queue_type: QueueType,
+        queue_type: QueueFamilyType,
     ) -> AppResult<Arc<Queue>> {
         Ok(queues
             .into_iter()
@@ -271,12 +272,12 @@ fn create_logical_device(
         graphics_queue: find_queue(
             &queues,
             queue_family_indices.graphics_family,
-            QueueType::Graphics,
+            QueueFamilyType::Graphics,
         )?,
         present_queue: find_queue(
             &queues,
             queue_family_indices.present_family,
-            QueueType::Present,
+            QueueFamilyType::Present,
         )?,
     })
 }

@@ -5,7 +5,7 @@ use vulkano::{LoadingError, Validated, VulkanError};
 pub type AppResult<R> = Result<R, AppError>;
 
 #[derive(Debug, Clone, Copy)]
-pub enum QueueType {
+pub enum QueueFamilyType {
     Graphics,
     Present,
 }
@@ -25,5 +25,5 @@ pub enum AppError {
     #[error("failed to find a suitable physical device")]
     PhysicalDevices,
     #[error("failed to get a {0:?} queue for logical device")]
-    QueueForDevice(QueueType),
+    QueueForDevice(QueueFamilyType),
 }
