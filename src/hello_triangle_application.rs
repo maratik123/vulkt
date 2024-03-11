@@ -21,6 +21,7 @@ pub struct HelloTriangleApplication {
     _graphics_queue: Arc<Queue>,
     _device: Arc<Device>,
     _physical_device: Arc<PhysicalDevice>,
+    _surface: Arc<Surface>,
     _debug_utils_messenger: Option<DebugUtilsMessenger>,
     _instance: Arc<Instance>,
     window: Arc<Window>,
@@ -30,22 +31,25 @@ pub struct HelloTriangleApplication {
 impl HelloTriangleApplication {
     pub fn new(validate: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
+        let window = Arc::new(window);
         let InitVulkanResult {
             instance,
             debug_utils_messenger,
+            surface,
             physical_device,
             device,
             graphics_queue,
             ..
-        } = init_vulkan(&event_loop, validate)?;
+        } = init_vulkan(&event_loop, window.clone(), validate)?;
 
         Ok(Self {
             _graphics_queue: graphics_queue,
             _device: device,
             _physical_device: physical_device,
+            _surface: surface,
             _debug_utils_messenger: debug_utils_messenger,
             _instance: instance,
-            window: Arc::new(window),
+            window,
             event_loop,
         })
     }
@@ -77,42 +81,74 @@ impl HelloTriangleApplication {
 #[derive(Default)]
 struct QueueFamilyIndicesBuilder {
     graphics_family: Option<u32>,
+    present_family: Option<u32>,
 }
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 struct QueueFamilyIndices {
     graphics_family: u32,
+    present_family: u32,
 }
 
 impl QueueFamilyIndicesBuilder {
     fn build(&self) -> Option<QueueFamilyIndices> {
-        self.graphics_family
-            .map(|graphics_family| QueueFamilyIndices { graphics_family })
+        self.graphics_family.and_then(|graphics_family| {
+            self.present_family
+                .map(|present_family| QueueFamilyIndices {
+                    graphics_family,
+                    present_family,
+                })
+        })
     }
 }
 
-fn find_queue_families(physical_device: &Arc<PhysicalDevice>) -> Option<QueueFamilyIndices> {
+fn find_queue_families(
+    physical_device: &Arc<PhysicalDevice>,
+    surface: &Arc<Surface>,
+) -> AppResult<Option<QueueFamilyIndices>> {
     let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
     for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
-        if prop.queue_flags.contains(QueueFlags::GRAPHICS) {
-            queue_family_indices.graphics_family = Some(i as u32);
+        let i = i as u32;
+        let mut changed = false;
 
+        if prop.queue_flags.contains(QueueFlags::GRAPHICS)
+            && queue_family_indices.graphics_family.is_none()
+        {
+            changed |= true;
+            queue_family_indices.graphics_family = Some(i);
+        }
+
+        if physical_device.surface_support(i, surface)?
+            && queue_family_indices.present_family.is_none()
+        {
+            changed |= true;
+            queue_family_indices.present_family = Some(i);
+        }
+
+        if changed {
             if let queue_family_indices @ Some(_) = queue_family_indices.build() {
-                return queue_family_indices;
+                return Ok(queue_family_indices);
             }
         }
     }
-    None
+    Ok(None)
 }
 
 fn pick_physical_device(
-    instance: Arc<Instance>,
+    instance: &Arc<Instance>,
+    surface: &Arc<Surface>,
 ) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
         .find_map(|physical_device| {
-            find_queue_families(&physical_device)
-                .map(|queue_family_indices| (physical_device, queue_family_indices))
+            match find_queue_families(&physical_device, surface) {
+                Ok(queue_family_indices) => queue_family_indices
+                    .map(|queue_family_indices| (physical_device, queue_family_indices)),
+                Err(e) => {
+                    warn!("can not find queue families for device [{physical_device:?}], with err: {e}, skipping it");
+                    None
+                }
+            }
         })
         .ok_or(AppError::PhysicalDevices)
 }
@@ -144,28 +180,39 @@ struct InitVulkanResult {
     graphics_queue: Arc<Queue>,
     device: Arc<Device>,
     physical_device: Arc<PhysicalDevice>,
+    surface: Arc<Surface>,
     debug_utils_messenger: Option<DebugUtilsMessenger>,
     instance: Arc<Instance>,
 }
 
-fn init_vulkan(event_loop: &EventLoop<()>, validate: bool) -> AppResult<InitVulkanResult> {
+fn init_vulkan(
+    event_loop: &EventLoop<()>,
+    window: Arc<Window>,
+    validate: bool,
+) -> AppResult<InitVulkanResult> {
     let instance = create_instance(event_loop, validate)?;
     let debug_utils_messenger = if validate {
         Some(setup_debug_messenger(instance.clone())?)
     } else {
         None
     };
-    let (physical_device, queue_family_indices) = pick_physical_device(instance.clone())?;
+    let surface = create_surface(instance.clone(), window)?;
+    let (physical_device, queue_family_indices) = pick_physical_device(&instance, &surface)?;
     let (device, graphics_queue) =
         create_logical_device(physical_device.clone(), queue_family_indices)?;
 
     Ok(InitVulkanResult {
         instance,
         debug_utils_messenger,
+        surface,
         physical_device,
         device,
         graphics_queue,
     })
+}
+
+fn create_surface(instance: Arc<Instance>, window: Arc<Window>) -> AppResult<Arc<Surface>> {
+    Ok(Surface::from_window(instance, window)?)
 }
 
 fn create_logical_device(
