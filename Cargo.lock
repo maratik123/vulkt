@@ -1355,6 +1355,7 @@ dependencies = [
  "anyhow",
  "clap",
  "glam",
+ "smallvec",
  "thiserror",
  "tracing",
  "tracing-subscriber",

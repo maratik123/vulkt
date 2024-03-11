@@ -1,4 +1,5 @@
-use crate::app_result::{AppError, AppResult};
+use crate::app_result::{AppError, AppResult, QueueType};
+use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::iter;
 use std::sync::{Arc, OnceLock};
@@ -18,6 +19,7 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 pub struct HelloTriangleApplication {
+    _present_queue: Arc<Queue>,
     _graphics_queue: Arc<Queue>,
     _device: Arc<Device>,
     _physical_device: Arc<PhysicalDevice>,
@@ -39,10 +41,12 @@ impl HelloTriangleApplication {
             physical_device,
             device,
             graphics_queue,
+            present_queue,
             ..
         } = init_vulkan(&event_loop, window.clone(), validate)?;
 
         Ok(Self {
+            _present_queue: present_queue,
             _graphics_queue: graphics_queue,
             _device: device,
             _physical_device: physical_device,
@@ -177,6 +181,7 @@ fn init_window() -> AppResult<(EventLoop<()>, Window)> {
 }
 
 struct InitVulkanResult {
+    present_queue: Arc<Queue>,
     graphics_queue: Arc<Queue>,
     device: Arc<Device>,
     physical_device: Arc<PhysicalDevice>,
@@ -198,8 +203,11 @@ fn init_vulkan(
     };
     let surface = create_surface(instance.clone(), window)?;
     let (physical_device, queue_family_indices) = pick_physical_device(&instance, &surface)?;
-    let (device, graphics_queue) =
-        create_logical_device(physical_device.clone(), queue_family_indices)?;
+    let CreateLogicalDeviceResult {
+        device,
+        graphics_queue,
+        present_queue,
+    } = create_logical_device(physical_device.clone(), queue_family_indices)?;
 
     Ok(InitVulkanResult {
         instance,
@@ -208,6 +216,7 @@ fn init_vulkan(
         physical_device,
         device,
         graphics_queue,
+        present_queue,
     })
 }
 
@@ -215,23 +224,61 @@ fn create_surface(instance: Arc<Instance>, window: Arc<Window>) -> AppResult<Arc
     Ok(Surface::from_window(instance, window)?)
 }
 
+struct CreateLogicalDeviceResult {
+    device: Arc<Device>,
+    graphics_queue: Arc<Queue>,
+    present_queue: Arc<Queue>,
+}
+
 fn create_logical_device(
     physical_device: Arc<PhysicalDevice>,
     queue_family_indices: QueueFamilyIndices,
-) -> AppResult<(Arc<Device>, Arc<Queue>)> {
-    let queue_create_info = QueueCreateInfo {
-        queue_family_index: queue_family_indices.graphics_family,
+) -> AppResult<CreateLogicalDeviceResult> {
+    let queue_create_infos = HashSet::from([
+        queue_family_indices.graphics_family,
+        queue_family_indices.present_family,
+    ])
+    .into_iter()
+    .map(|queue_family_index| QueueCreateInfo {
+        queue_family_index,
         queues: vec![1.0],
         ..QueueCreateInfo::default()
-    };
+    })
+    .collect();
     let device_features = Features::default();
     let device_create_info = DeviceCreateInfo {
-        queue_create_infos: vec![queue_create_info],
+        queue_create_infos,
         enabled_features: device_features,
         ..DeviceCreateInfo::default()
     };
-    let (device, mut queues) = Device::new(physical_device, device_create_info)?;
-    Ok((device, queues.next().ok_or(AppError::QueueForDevice)?))
+    let (device, queues) = Device::new(physical_device, device_create_info)?;
+    let queues: SmallVec<[_; 2]> = queues.collect();
+
+    fn find_queue<'a>(
+        queues: impl IntoIterator<Item = &'a Arc<Queue>>,
+        queue_family_index: u32,
+        queue_type: QueueType,
+    ) -> AppResult<Arc<Queue>> {
+        Ok(queues
+            .into_iter()
+            .find(|queue| queue.queue_family_index() == queue_family_index)
+            .ok_or(AppError::QueueForDevice(queue_type))?
+            .clone())
+    }
+
+    Ok(CreateLogicalDeviceResult {
+        device,
+        graphics_queue: find_queue(
+            &queues,
+            queue_family_indices.graphics_family,
+            QueueType::Graphics,
+        )?,
+        present_queue: find_queue(
+            &queues,
+            queue_family_indices.present_family,
+            QueueType::Present,
+        )?,
+    })
 }
 
 fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {

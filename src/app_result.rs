@@ -4,6 +4,12 @@ use vulkano::{LoadingError, Validated, VulkanError};
 
 pub type AppResult<R> = Result<R, AppError>;
 
+#[derive(Debug, Clone, Copy)]
+pub enum QueueType {
+    Graphics,
+    Present,
+}
+
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("no local Vulkan library: {0:?}")]
@@ -18,6 +24,6 @@ pub enum AppError {
     RequiredLayers,
     #[error("failed to find a suitable physical device")]
     PhysicalDevices,
-    #[error("failed to get a queue for logical device")]
-    QueueForDevice,
+    #[error("failed to get a {0:?} queue for logical device")]
+    QueueForDevice(QueueType),
 }
