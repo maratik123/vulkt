@@ -115,15 +115,15 @@ fn find_queue_families(
         let i = i as u32;
         let mut changed = false;
 
-        if prop.queue_flags.contains(QueueFlags::GRAPHICS)
-            && queue_family_indices.graphics_family.is_none()
+        if queue_family_indices.graphics_family.is_none()
+            && prop.queue_flags.contains(QueueFlags::GRAPHICS)
         {
             changed |= true;
             queue_family_indices.graphics_family = Some(i);
         }
 
-        if physical_device.surface_support(i, surface)?
-            && queue_family_indices.present_family.is_none()
+        if queue_family_indices.present_family.is_none()
+            && physical_device.surface_support(i, surface)?
         {
             changed |= true;
             queue_family_indices.present_family = Some(i);
@@ -263,7 +263,7 @@ fn create_logical_device(
         Ok(queues
             .into_iter()
             .find(|queue| queue.queue_family_index() == queue_family_index)
-            .ok_or(AppError::QueueForDevice(queue_type))?
+            .ok_or_else(|| AppError::QueueForDevice(queue_type))?
             .clone())
     }
 
