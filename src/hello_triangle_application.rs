@@ -141,6 +141,7 @@ fn pick_physical_device(
 ) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
+        .filter(|physical_device| physical_device.supported_extensions().khr_swapchain)
         .find_map(|physical_device| {
             match find_queue_families(&physical_device, surface) {
                 Ok(queue_family_indices) => queue_family_indices
