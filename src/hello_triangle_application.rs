@@ -5,7 +5,9 @@ use std::iter;
 use std::sync::{Arc, OnceLock};
 use tracing::{debug, enabled, error, info, trace, warn, Level};
 use vulkano::device::physical::PhysicalDevice;
-use vulkano::device::{Device, DeviceCreateInfo, Features, Queue, QueueCreateInfo, QueueFlags};
+use vulkano::device::{
+    Device, DeviceCreateInfo, DeviceExtensions, Features, Queue, QueueCreateInfo, QueueFlags,
+};
 use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
@@ -135,13 +137,18 @@ fn find_queue_families(
     Ok(None)
 }
 
+const DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {
+    khr_swapchain: true,
+    ..DeviceExtensions::empty()
+};
+
 fn pick_physical_device(
     instance: &Arc<Instance>,
     surface: &Arc<Surface>,
 ) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
-        .filter(|physical_device| physical_device.supported_extensions().khr_swapchain)
+        .filter(|physical_device| physical_device.supported_extensions().contains(&DEVICE_EXTENSIONS))
         .find_map(|physical_device| {
             match find_queue_families(&physical_device, surface) {
                 Ok(queue_family_indices) => queue_family_indices
@@ -248,6 +255,7 @@ fn create_logical_device(
     let device_create_info = DeviceCreateInfo {
         queue_create_infos,
         enabled_features: device_features,
+        enabled_extensions: DEVICE_EXTENSIONS,
         ..DeviceCreateInfo::default()
     };
     let (device, queues) = Device::new(physical_device, device_create_info)?;
