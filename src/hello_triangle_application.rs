@@ -31,7 +31,7 @@ pub struct HelloTriangleApplication {
 }
 
 impl HelloTriangleApplication {
-    pub fn new(validate: bool) -> AppResult<Self> {
+    pub fn new(enable_validation: bool) -> AppResult<Self> {
         let (event_loop, window) = init_window()?;
         let window = Arc::new(window);
         let InitVulkanResult {
@@ -43,7 +43,7 @@ impl HelloTriangleApplication {
             graphics_queue,
             present_queue,
             ..
-        } = init_vulkan(&event_loop, window.clone(), validate)?;
+        } = init_vulkan(&event_loop, window.clone(), enable_validation)?;
 
         Ok(Self {
             _present_queue: present_queue,
@@ -190,10 +190,10 @@ struct InitVulkanResult {
 fn init_vulkan(
     event_loop: &EventLoop<()>,
     window: Arc<Window>,
-    validate: bool,
+    enable_validation: bool,
 ) -> AppResult<InitVulkanResult> {
-    let instance = create_instance(event_loop, validate)?;
-    let debug_utils_messenger = if validate {
+    let instance = create_instance(event_loop, enable_validation)?;
+    let debug_utils_messenger = if enable_validation {
         Some(setup_debug_messenger(instance.clone())?)
     } else {
         None
@@ -279,11 +279,14 @@ fn create_logical_device(
     })
 }
 
-fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<Instance>> {
+fn create_instance(
+    event_loop: &EventLoop<()>,
+    enable_validation: bool,
+) -> AppResult<Arc<Instance>> {
     let library = VulkanLibrary::new()?;
 
     let required_extensions = InstanceExtensions {
-        ext_debug_utils: validate,
+        ext_debug_utils: enable_validation,
         ..Surface::required_extensions(&event_loop)
     };
     info!("required extensions: {required_extensions:?}");
@@ -306,7 +309,7 @@ fn create_instance(event_loop: &EventLoop<()>, validate: bool) -> AppResult<Arc<
         ..InstanceCreateInfo::application_from_cargo_toml()
     };
 
-    if validate {
+    if enable_validation {
         let available_layers = library
             .layer_properties()
             .unwrap()
