@@ -96,12 +96,9 @@ struct QueueFamilyIndices {
 
 impl QueueFamilyIndicesBuilder {
     fn build(&self) -> Option<QueueFamilyIndices> {
-        self.graphics_family.and_then(|graphics_family| {
-            self.present_family
-                .map(|present_family| QueueFamilyIndices {
-                    graphics_family,
-                    present_family,
-                })
+        Some(QueueFamilyIndices {
+            graphics_family: self.graphics_family?,
+            present_family: self.present_family?,
         })
     }
 }
