@@ -8,12 +8,13 @@ use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{
     Device, DeviceCreateInfo, DeviceExtensions, Features, Queue, QueueCreateInfo, QueueFlags,
 };
+use vulkano::format::Format;
 use vulkano::instance::debug::{
     DebugUtilsMessageSeverity, DebugUtilsMessageType, DebugUtilsMessenger,
     DebugUtilsMessengerCallback, DebugUtilsMessengerCreateInfo,
 };
 use vulkano::instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions};
-use vulkano::swapchain::Surface;
+use vulkano::swapchain::{PresentMode, Surface, SurfaceCapabilities, SurfaceInfo};
 use vulkano::{Version, VulkanLibrary};
 use winit::dpi::PhysicalSize;
 use winit::event::{Event, WindowEvent};
@@ -84,6 +85,38 @@ impl HelloTriangleApplication {
     }
 }
 
+struct SwapChainSupportDetails {
+    _capabilities: SurfaceCapabilities,
+    formats: Vec<Format>,
+    present_mode: Vec<PresentMode>,
+}
+
+impl SwapChainSupportDetails {
+    fn is_adequate(&self) -> bool {
+        !self.formats.is_empty() && !self.present_mode.is_empty()
+    }
+}
+
+fn query_swap_chain_support(
+    physical_device: &PhysicalDevice,
+    surface: &Surface,
+) -> AppResult<SwapChainSupportDetails> {
+    let capabilities = physical_device.surface_capabilities(surface, SurfaceInfo::default())?;
+    let formats = physical_device
+        .surface_formats(surface, SurfaceInfo::default())?
+        .into_iter()
+        .map(|(format, _)| format)
+        .collect();
+    let present_mode = physical_device
+        .surface_present_modes(surface, SurfaceInfo::default())?
+        .collect();
+    Ok(SwapChainSupportDetails {
+        _capabilities: capabilities,
+        formats,
+        present_mode,
+    })
+}
+
 #[derive(Default)]
 struct QueueFamilyIndicesBuilder {
     graphics_family: Option<u32>,
@@ -106,8 +139,8 @@ impl QueueFamilyIndicesBuilder {
 }
 
 fn find_queue_families(
-    physical_device: &Arc<PhysicalDevice>,
-    surface: &Arc<Surface>,
+    physical_device: &PhysicalDevice,
+    surface: &Surface,
 ) -> AppResult<Option<QueueFamilyIndices>> {
     let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
     for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
@@ -144,11 +177,20 @@ const DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {
 
 fn pick_physical_device(
     instance: &Arc<Instance>,
-    surface: &Arc<Surface>,
+    surface: &Surface,
 ) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
         .filter(|physical_device| physical_device.supported_extensions().contains(&DEVICE_EXTENSIONS))
+        .filter(|physical_device| {
+            match query_swap_chain_support(physical_device, surface) {
+                Ok(swap_chain_support_details) => swap_chain_support_details.is_adequate(),
+                Err(e) => {
+                    warn!("can not query swapchain support for physical device [{physical_device:?}], with err: {e}, skipping it");
+                    false
+                },
+            }
+        })
         .find_map(|physical_device| {
             match find_queue_families(&physical_device, surface) {
                 Ok(queue_family_indices) => queue_family_indices
