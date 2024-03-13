@@ -1,6 +1,7 @@
 use std::num::ParseIntError;
 use thiserror::Error;
 use vulkano::{LoadingError, Validated, VulkanError};
+use winit::error::OsError;
 
 pub type AppResult<R> = Result<R, AppError>;
 
@@ -26,4 +27,6 @@ pub enum AppError {
     PhysicalDevices,
     #[error("failed to get a {0:?} queue for logical device")]
     QueueForDevice(QueueFamilyType),
+    #[error("os error found: {0:?}")]
+    OsError(#[from] OsError),
 }

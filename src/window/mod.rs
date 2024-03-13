@@ -14,8 +14,7 @@ impl AppWindow {
 
         let window = WindowBuilder::new()
             .with_resizable(false)
-            .build(&event_loop)
-            .unwrap();
+            .build(&event_loop)?;
         window.set_inner_size(PhysicalSize::new(WIDTH, HEIGHT));
         window.set_title("Vulkan Tutorial");
 

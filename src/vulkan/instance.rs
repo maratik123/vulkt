@@ -41,8 +41,7 @@ pub fn create_instance(
 
     if enable_validation {
         let available_layers = library
-            .layer_properties()
-            .unwrap()
+            .layer_properties()?
             .map(|layer| layer.name().to_string())
             .collect();
         debug!("available layers: {available_layers:?}");

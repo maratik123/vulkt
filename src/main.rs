@@ -17,7 +17,7 @@ fn main() -> ! {
 
     info!("validation status: {}", args.validate);
 
-    let app = HelloTriangleApplication::new(args.validate).unwrap();
+    let app = HelloTriangleApplication::new(args.validate).expect("Can not create app");
 
     app.run()
 }
