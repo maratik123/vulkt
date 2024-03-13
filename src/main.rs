@@ -10,7 +10,7 @@ struct Args {
     validate: bool,
 }
 
-fn main() {
+fn main() -> ! {
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
@@ -19,5 +19,5 @@ fn main() {
 
     let app = HelloTriangleApplication::new(args.validate).unwrap();
 
-    app.run();
+    app.run()
 }

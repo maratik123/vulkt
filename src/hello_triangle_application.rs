@@ -51,11 +51,11 @@ impl HelloTriangleApplication {
         })
     }
 
-    pub fn run(self) {
-        self.main_loop();
+    pub fn run(self) -> ! {
+        self.main_loop()
     }
 
-    fn main_loop(self) {
+    fn main_loop(self) -> ! {
         self.event_loop.run(move |event, _, control_flow| {
             control_flow.set_poll();
             match event {
@@ -71,6 +71,6 @@ impl HelloTriangleApplication {
                 Event::RedrawRequested(_) => {}
                 _ => {}
             }
-        });
+        })
     }
 }
