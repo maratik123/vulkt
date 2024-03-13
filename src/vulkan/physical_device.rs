@@ -1,6 +1,5 @@
 use crate::app_result::{AppError, AppResult};
-use crate::vulkan::queue_family_indices::find_queue_families;
-use crate::vulkan::swapchain::query_swap_chain_support;
+use crate::vulkan::swapchain::SwapChainSupportDetails;
 use crate::vulkan::QueueFamilyIndices;
 use std::sync::Arc;
 use tracing::warn;
@@ -17,7 +16,7 @@ pub fn pick_physical_device(
         .enumerate_physical_devices()?
         .filter(|physical_device| physical_device.supported_extensions().contains(&DEVICE_EXTENSIONS))
         .filter(|physical_device| {
-            match query_swap_chain_support(physical_device, surface) {
+            match SwapChainSupportDetails::query(physical_device, surface) {
                 Ok(swap_chain_support_details) => swap_chain_support_details.is_adequate(),
                 Err(e) => {
                     warn!("can not query swapchain support for physical device [{physical_device:?}], with err: {e}, skipping it");
@@ -26,7 +25,7 @@ pub fn pick_physical_device(
             }
         })
         .find_map(|physical_device| {
-            match find_queue_families(&physical_device, surface) {
+            match QueueFamilyIndices::find(&physical_device, surface) {
                 Ok(queue_family_indices) => queue_family_indices
                     .map(|queue_family_indices| (physical_device, queue_family_indices)),
                 Err(e) => {
