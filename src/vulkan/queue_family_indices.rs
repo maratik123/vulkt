@@ -50,6 +50,7 @@ struct QueueFamilyIndicesBuilder {
 }
 
 impl QueueFamilyIndicesBuilder {
+    #[inline]
     fn build(&self) -> Option<QueueFamilyIndices> {
         Some(QueueFamilyIndices {
             graphics_family: self.graphics_family?,

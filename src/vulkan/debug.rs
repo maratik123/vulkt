@@ -7,6 +7,7 @@ use vulkano::instance::debug::{
 };
 use vulkano::instance::Instance;
 
+#[inline]
 pub fn populate_debug_utils_messenger_create_info() -> DebugUtilsMessengerCreateInfo {
     DebugUtilsMessengerCreateInfo {
         message_severity: DebugUtilsMessageSeverity::ERROR
@@ -20,6 +21,7 @@ pub fn populate_debug_utils_messenger_create_info() -> DebugUtilsMessengerCreate
     }
 }
 
+#[inline]
 fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
     // SAFETY: func does not make any calls to the Vulkan API
     unsafe {
@@ -54,6 +56,7 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
     }
 }
 
+#[inline]
 pub fn setup_debug_messenger(instance: Arc<Instance>) -> AppResult<DebugUtilsMessenger> {
     Ok(DebugUtilsMessenger::new(
         instance,

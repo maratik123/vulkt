@@ -4,6 +4,7 @@ use vulkano::instance::Instance;
 use vulkano::swapchain::Surface;
 use winit::window::Window;
 
+#[inline]
 pub fn create_surface(instance: Arc<Instance>, window: Arc<Window>) -> AppResult<Arc<Surface>> {
     Ok(Surface::from_window(instance, window)?)
 }

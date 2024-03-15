@@ -27,6 +27,7 @@ impl SwapChainSupportDetails {
         })
     }
 
+    #[inline]
     pub fn is_adequate(&self) -> bool {
         !self.formats.is_empty() && !self.present_mode.is_empty()
     }

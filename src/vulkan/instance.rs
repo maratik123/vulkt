@@ -72,6 +72,7 @@ pub fn create_instance(
 
 const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
 
+#[inline]
 fn validation_layers() -> &'static HashSet<String> {
     static VALIDATION_LAYERS_LOCK: OnceLock<HashSet<String>> = OnceLock::new();
     VALIDATION_LAYERS_LOCK.get_or_init(|| VALIDATION_LAYERS.iter().map(|s| s.to_string()).collect())

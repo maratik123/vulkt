@@ -51,6 +51,7 @@ impl HelloTriangleApplication {
         })
     }
 
+    #[inline]
     pub fn run(self) -> ! {
         self.main_loop()
     }
