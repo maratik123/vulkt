@@ -15,6 +15,7 @@ impl QueueFamilyIndices {
         surface: &Surface,
     ) -> AppResult<Option<QueueFamilyIndices>> {
         let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
+        let mut last_err = None;
         for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
             let i = i as u32;
             let mut changed = false;
@@ -26,11 +27,17 @@ impl QueueFamilyIndices {
                 queue_family_indices.graphics_family = Some(i);
             }
 
-            if queue_family_indices.present_family.is_none()
-                && physical_device.surface_support(i, surface)?
-            {
-                changed |= true;
-                queue_family_indices.present_family = Some(i);
+            if queue_family_indices.present_family.is_none() {
+                match physical_device.surface_support(i, surface) {
+                    Ok(true) => {
+                        changed |= true;
+                        queue_family_indices.present_family = Some(i);
+                    }
+                    Ok(false) => (),
+                    Err(e) => {
+                        last_err = Some(e);
+                    }
+                }
             }
 
             if changed {
@@ -39,7 +46,12 @@ impl QueueFamilyIndices {
                 }
             }
         }
-        Ok(None)
+
+        if let Some(err) = last_err {
+            Err(err.into())
+        } else {
+            Ok(None)
+        }
     }
 }
 
