@@ -1,5 +1,6 @@
 use crate::app_result::{AppError, AppResult};
 use crate::vulkan::debug::populate_debug_utils_messenger_create_info;
+use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::iter;
 use std::sync::{Arc, OnceLock};
@@ -53,7 +54,9 @@ pub fn create_instance(
         if let Some(first_diff) = diff_it.next() {
             error!(
                 "unavailable required layers: {:?}",
-                iter::once(first_diff).chain(diff_it).collect::<Vec<_>>()
+                iter::once(first_diff)
+                    .chain(diff_it)
+                    .collect::<SmallVec<[_; VALIDATION_LAYERS.len()]>>()
             );
             return Err(AppError::RequiredLayers);
         } else {
