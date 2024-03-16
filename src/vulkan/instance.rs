@@ -41,30 +41,30 @@ pub fn create_instance(
     };
 
     if enable_validation {
-        let available_layers = library
-            .layer_properties()?
-            .map(|layer| layer.name().to_string())
-            .collect();
-        debug!("available layers: {available_layers:?}");
-
         let required_layers = validation_layers();
         info!("required layers: {required_layers:?}");
 
-        let mut diff_it = required_layers.difference(&available_layers);
-        if let Some(first_diff) = diff_it.next() {
-            error!(
-                "unavailable required layers: {:?}",
-                iter::once(first_diff)
-                    .chain(diff_it)
-                    .collect::<SmallVec<[_; VALIDATION_LAYERS.len()]>>()
-            );
-            return Err(AppError::RequiredLayers);
-        } else {
-            info!("all required layers satisfied");
+        {
+            let layer_properties: Vec<_> = library.layer_properties()?.collect();
+            let available_layers = layer_properties.iter().map(|layer| layer.name()).collect();
+            debug!("available layers: {available_layers:?}");
+
+            let mut diff_it = required_layers.difference(&available_layers);
+            if let Some(first_diff) = diff_it.next() {
+                error!(
+                    "unavailable required layers: {:?}",
+                    iter::once(first_diff)
+                        .chain(diff_it)
+                        .collect::<SmallVec<[_; VALIDATION_LAYERS.len()]>>()
+                );
+                return Err(AppError::RequiredLayers);
+            } else {
+                info!("all required layers satisfied");
+            }
         }
 
         instance_create_info = InstanceCreateInfo {
-            enabled_layers: required_layers.iter().cloned().collect(),
+            enabled_layers: required_layers.iter().map(|s| s.to_string()).collect(),
             debug_utils_messengers: vec![populate_debug_utils_messenger_create_info()],
             ..instance_create_info
         };
@@ -76,7 +76,7 @@ pub fn create_instance(
 const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
 
 #[inline]
-fn validation_layers() -> &'static HashSet<String> {
-    static VALIDATION_LAYERS_LOCK: OnceLock<HashSet<String>> = OnceLock::new();
-    VALIDATION_LAYERS_LOCK.get_or_init(|| VALIDATION_LAYERS.iter().map(|s| s.to_string()).collect())
+fn validation_layers() -> &'static HashSet<&'static str> {
+    static VALIDATION_LAYERS_LOCK: OnceLock<HashSet<&'static str>> = OnceLock::new();
+    VALIDATION_LAYERS_LOCK.get_or_init(|| VALIDATION_LAYERS.iter().copied().collect())
 }
