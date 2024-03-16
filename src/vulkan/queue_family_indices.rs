@@ -1,4 +1,5 @@
 use crate::app_result::AppResult;
+use tracing::info;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::QueueFlags;
 use vulkano::swapchain::Surface;
@@ -35,6 +36,11 @@ impl QueueFamilyIndices {
                     }
                     Ok(false) => (),
                     Err(e) => {
+                        info!(
+                            "matching physical device {physical_device:?} \
+                             with surface {surface:?} at queue family index {i} \
+                             ends with error {e}"
+                        );
                         last_err = Some(e);
                     }
                 }

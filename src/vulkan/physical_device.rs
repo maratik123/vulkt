@@ -14,26 +14,37 @@ pub fn pick_physical_device(
 ) -> AppResult<(Arc<PhysicalDevice>, QueueFamilyIndices)> {
     instance
         .enumerate_physical_devices()?
-        .filter(|physical_device| physical_device.supported_extensions().contains(&DEVICE_EXTENSIONS))
         .filter(|physical_device| {
-            match SwapChainSupportDetails::query(physical_device, surface) {
+            physical_device
+                .supported_extensions()
+                .contains(&DEVICE_EXTENSIONS)
+        })
+        .filter(
+            |physical_device| match SwapChainSupportDetails::query(physical_device, surface) {
                 Ok(swap_chain_support_details) => swap_chain_support_details.is_adequate(),
                 Err(e) => {
-                    warn!("can not query swapchain support for physical device [{physical_device:?}], with err: {e}, skipping it");
+                    warn!(
+                        "can not query swapchain support \
+                         for physical device [{physical_device:?}], \
+                         with err: {e}, skipping it"
+                    );
                     false
-                },
-            }
-        })
-        .find_map(|physical_device| {
-            match QueueFamilyIndices::find(&physical_device, surface) {
+                }
+            },
+        )
+        .find_map(
+            |physical_device| match QueueFamilyIndices::find(&physical_device, surface) {
                 Ok(queue_family_indices) => queue_family_indices
                     .map(|queue_family_indices| (physical_device, queue_family_indices)),
                 Err(e) => {
-                    warn!("can not find queue families for device [{physical_device:?}], with err: {e}, skipping it");
+                    warn!(
+                        "can not find queue families for device [{physical_device:?}], \
+                         with last err: {e}, skipping it"
+                    );
                     None
                 }
-            }
-        })
+            },
+        )
         .ok_or(AppError::PhysicalDevices)
 }
 
