@@ -58,10 +58,10 @@ pub fn create_instance(
                         .collect::<SmallVec<[_; VALIDATION_LAYERS.len()]>>()
                 );
                 return Err(AppError::RequiredLayers);
-            } else {
-                info!("all required layers satisfied");
             }
         }
+
+        info!("all required layers satisfied");
 
         instance_create_info = InstanceCreateInfo {
             enabled_layers: required_layers.iter().map(|s| s.to_string()).collect(),
