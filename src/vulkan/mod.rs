@@ -13,9 +13,11 @@ use crate::vulkan::logical_device::AppLogicalDevice;
 use crate::vulkan::physical_device::pick_physical_device;
 use crate::vulkan::queue_family_indices::QueueFamilyIndices;
 use crate::vulkan::surface::create_surface;
+use crate::vulkan::swapchain::create_image_views;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
+use vulkano::image::view::ImageView;
 use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
@@ -24,15 +26,16 @@ use winit::event_loop::EventLoop;
 use winit::window::Window;
 
 pub struct AppVulkan {
-    pub swapchain_images: Vec<Arc<Image>>,
-    pub swapchain: Arc<Swapchain>,
-    pub present_queue: Arc<Queue>,
-    pub graphics_queue: Arc<Queue>,
-    pub device: Arc<Device>,
-    pub physical_device: Arc<PhysicalDevice>,
-    pub surface: Arc<Surface>,
-    pub debug_utils_messenger: Option<DebugUtilsMessenger>,
     pub instance: Arc<Instance>,
+    pub debug_utils_messenger: Option<DebugUtilsMessenger>,
+    pub surface: Arc<Surface>,
+    pub physical_device: Arc<PhysicalDevice>,
+    pub device: Arc<Device>,
+    pub graphics_queue: Arc<Queue>,
+    pub present_queue: Arc<Queue>,
+    pub swapchain: Arc<Swapchain>,
+    pub swapchain_images: Vec<Arc<Image>>,
+    pub swapchain_image_views: Vec<Arc<ImageView>>,
 }
 
 impl AppVulkan {
@@ -54,7 +57,6 @@ impl AppVulkan {
             device,
             graphics_queue,
             present_queue,
-            ..
         } = AppLogicalDevice::create(physical_device.clone(), &queue_family_indices)?;
         let (swapchain, swapchain_images) = swap_chain_support.create_swapchain(
             device.clone(),
@@ -62,6 +64,7 @@ impl AppVulkan {
             &window,
             &queue_family_indices,
         )?;
+        let swapchain_image_views = create_image_views(&swapchain_images)?;
 
         Ok(Self {
             instance,
@@ -73,6 +76,7 @@ impl AppVulkan {
             present_queue,
             swapchain,
             swapchain_images,
+            swapchain_image_views,
         })
     }
 }

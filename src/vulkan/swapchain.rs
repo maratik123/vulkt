@@ -4,6 +4,7 @@ use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::Device;
 use vulkano::format::Format;
+use vulkano::image::view::ImageView;
 use vulkano::image::{Image, ImageUsage};
 use vulkano::swapchain::{
     ColorSpace, CompositeAlpha, PresentMode, Surface, SurfaceCapabilities, SurfaceInfo, Swapchain,
@@ -54,16 +55,8 @@ impl SwapChainSupportDetails {
         if let Some(max_image_count) = self.capabilities.max_image_count {
             min_image_count = min_image_count.min(max_image_count);
         }
-        let swapchain_create_info = SwapchainCreateInfo {
-            min_image_count,
-            image_format,
-            image_color_space,
-            image_extent,
-            image_array_layers: 1,
-            image_usage: ImageUsage::COLOR_ATTACHMENT,
-            image_sharing: if queue_family_indices.graphics_family
-                == queue_family_indices.present_family
-            {
+        let image_sharing =
+            if queue_family_indices.graphics_family == queue_family_indices.present_family {
                 Sharing::Exclusive
             } else {
                 Sharing::Concurrent(
@@ -74,7 +67,15 @@ impl SwapChainSupportDetails {
                     .into_iter()
                     .collect(),
                 )
-            },
+            };
+        let swapchain_create_info = SwapchainCreateInfo {
+            min_image_count,
+            image_format,
+            image_color_space,
+            image_extent,
+            image_array_layers: 1,
+            image_usage: ImageUsage::COLOR_ATTACHMENT,
+            image_sharing,
             pre_transform: self.capabilities.current_transform,
             composite_alpha: CompositeAlpha::Opaque,
             present_mode,
@@ -94,9 +95,7 @@ fn choose_swap_surface_format(
         .iter()
         .copied()
         .chain(iter)
-        .find(|(format, color_space)| {
-            format == &Format::B8G8R8A8_SRGB && color_space == &ColorSpace::SrgbNonLinear
-        })
+        .find(|format| format == &(Format::B8G8R8A8_SRGB, ColorSpace::SrgbNonLinear))
         .or(first)
         .ok_or(AppError::SwapChainFormatUnavailable)
 }
@@ -119,4 +118,12 @@ fn choose_swap_extent(surface_capabilities: &SurfaceCapabilities, window: &Windo
         let [max_x, max_y] = surface_capabilities.max_image_extent;
         [x.clamp(min_x, max_x), y.clamp(min_y, max_y)]
     }
+}
+
+pub fn create_image_views(swapchain_images: &[Arc<Image>]) -> AppResult<Vec<Arc<ImageView>>> {
+    swapchain_images
+        .iter()
+        .map(|image| ImageView::new_default(image.clone()))
+        .collect::<Result<_, _>>()
+        .map_err(|e| e.into())
 }

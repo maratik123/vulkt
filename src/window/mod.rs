@@ -6,10 +6,13 @@ use winit::window::{Window, WindowBuilder};
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 600;
 
-pub struct AppWindow;
+pub struct AppWindow {
+    pub event_loop: EventLoop<()>,
+    pub window: Window,
+}
 
 impl AppWindow {
-    pub fn init() -> AppResult<(EventLoop<()>, Window)> {
+    pub fn init() -> AppResult<Self> {
         let event_loop = EventLoop::new();
 
         let window = WindowBuilder::new()
@@ -18,6 +21,6 @@ impl AppWindow {
         window.set_inner_size(PhysicalSize::new(WIDTH, HEIGHT));
         window.set_title("Vulkan Tutorial");
 
-        Ok((event_loop, window))
+        Ok(Self { event_loop, window })
     }
 }

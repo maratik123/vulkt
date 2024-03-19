@@ -4,6 +4,7 @@ use crate::window::AppWindow;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
+use vulkano::image::view::ImageView;
 use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
@@ -13,22 +14,23 @@ use winit::event_loop::EventLoop;
 use winit::window::Window;
 
 pub struct HelloTriangleApplication {
-    _swapchain_images: Vec<Arc<Image>>,
-    _swapchain: Arc<Swapchain>,
-    _present_queue: Arc<Queue>,
-    _graphics_queue: Arc<Queue>,
-    _device: Arc<Device>,
-    _physical_device: Arc<PhysicalDevice>,
-    _surface: Arc<Surface>,
-    _debug_utils_messenger: Option<DebugUtilsMessenger>,
-    _instance: Arc<Instance>,
-    window: Arc<Window>,
     event_loop: EventLoop<()>,
+    window: Arc<Window>,
+    _instance: Arc<Instance>,
+    _debug_utils_messenger: Option<DebugUtilsMessenger>,
+    _surface: Arc<Surface>,
+    _physical_device: Arc<PhysicalDevice>,
+    _device: Arc<Device>,
+    _graphics_queue: Arc<Queue>,
+    _present_queue: Arc<Queue>,
+    _swapchain: Arc<Swapchain>,
+    _swapchain_images: Vec<Arc<Image>>,
+    _swapchain_image_views: Vec<Arc<ImageView>>,
 }
 
 impl HelloTriangleApplication {
     pub fn new(enable_validation: bool) -> AppResult<Self> {
-        let (event_loop, window) = AppWindow::init()?;
+        let AppWindow { event_loop, window } = AppWindow::init()?;
         let window = Arc::new(window);
         let AppVulkan {
             instance,
@@ -40,10 +42,11 @@ impl HelloTriangleApplication {
             present_queue,
             swapchain,
             swapchain_images,
-            ..
+            swapchain_image_views,
         } = AppVulkan::init(&event_loop, window.clone(), enable_validation)?;
 
         Ok(Self {
+            _swapchain_image_views: swapchain_image_views,
             _swapchain_images: swapchain_images,
             _swapchain: swapchain,
             _present_queue: present_queue,
