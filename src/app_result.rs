@@ -29,4 +29,6 @@ pub enum AppError {
     QueueForDevice(QueueFamilyType),
     #[error("os error found: {0:?}")]
     OsError(#[from] OsError),
+    #[error("no available swap chain formats")]
+    SwapChainFormatUnavailable,
 }

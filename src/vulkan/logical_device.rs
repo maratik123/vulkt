@@ -16,7 +16,7 @@ pub struct AppLogicalDevice {
 impl AppLogicalDevice {
     pub fn create(
         physical_device: Arc<PhysicalDevice>,
-        queue_family_indices: QueueFamilyIndices,
+        queue_family_indices: &QueueFamilyIndices,
     ) -> AppResult<AppLogicalDevice> {
         let queue_create_infos = HashSet::from([
             queue_family_indices.graphics_family,

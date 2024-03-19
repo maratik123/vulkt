@@ -4,14 +4,17 @@ use crate::window::AppWindow;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
+use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
-use vulkano::swapchain::Surface;
+use vulkano::swapchain::{Surface, Swapchain};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
 
 pub struct HelloTriangleApplication {
+    _swapchain_images: Vec<Arc<Image>>,
+    _swapchain: Arc<Swapchain>,
     _present_queue: Arc<Queue>,
     _graphics_queue: Arc<Queue>,
     _device: Arc<Device>,
@@ -35,10 +38,14 @@ impl HelloTriangleApplication {
             device,
             graphics_queue,
             present_queue,
+            swapchain,
+            swapchain_images,
             ..
         } = AppVulkan::init(&event_loop, window.clone(), enable_validation)?;
 
         Ok(Self {
+            _swapchain_images: swapchain_images,
+            _swapchain: swapchain,
             _present_queue: present_queue,
             _graphics_queue: graphics_queue,
             _device: device,

@@ -16,13 +16,16 @@ use crate::vulkan::surface::create_surface;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
+use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
-use vulkano::swapchain::Surface;
+use vulkano::swapchain::{Surface, Swapchain};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
 
 pub struct AppVulkan {
+    pub swapchain_images: Vec<Arc<Image>>,
+    pub swapchain: Arc<Swapchain>,
     pub present_queue: Arc<Queue>,
     pub graphics_queue: Arc<Queue>,
     pub device: Arc<Device>,
@@ -44,14 +47,21 @@ impl AppVulkan {
         } else {
             None
         };
-        let surface = create_surface(instance.clone(), window)?;
-        let (physical_device, queue_family_indices) = pick_physical_device(&instance, &surface)?;
+        let surface = create_surface(instance.clone(), window.clone())?;
+        let (physical_device, queue_family_indices, swap_chain_support) =
+            pick_physical_device(&instance, &surface)?;
         let AppLogicalDevice {
             device,
             graphics_queue,
             present_queue,
             ..
-        } = AppLogicalDevice::create(physical_device.clone(), queue_family_indices)?;
+        } = AppLogicalDevice::create(physical_device.clone(), &queue_family_indices)?;
+        let (swapchain, swapchain_images) = swap_chain_support.create_swapchain(
+            device.clone(),
+            surface.clone(),
+            &window,
+            &queue_family_indices,
+        )?;
 
         Ok(Self {
             instance,
@@ -61,6 +71,8 @@ impl AppVulkan {
             device,
             graphics_queue,
             present_queue,
+            swapchain,
+            swapchain_images,
         })
     }
 }
