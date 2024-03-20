@@ -1,4 +1,5 @@
 mod debug;
+mod graphics_pipeline;
 mod instance;
 mod logical_device;
 mod physical_device;
@@ -8,6 +9,7 @@ mod swapchain;
 
 use crate::app_result::AppResult;
 use crate::vulkan::debug::setup_debug_messenger;
+use crate::vulkan::graphics_pipeline::create_graphics_pipeline;
 use crate::vulkan::instance::create_instance;
 use crate::vulkan::logical_device::AppLogicalDevice;
 use crate::vulkan::physical_device::pick_physical_device;
@@ -65,6 +67,7 @@ impl AppVulkan {
             &queue_family_indices,
         )?;
         let swapchain_image_views = create_image_views(&swapchain_images)?;
+        create_graphics_pipeline();
 
         Ok(Self {
             instance,
