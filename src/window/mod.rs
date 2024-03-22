@@ -1,4 +1,4 @@
-use crate::app_result::AppResult;
+use anyhow::Result;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
@@ -12,7 +12,7 @@ pub struct AppWindow {
 }
 
 impl AppWindow {
-    pub fn init() -> AppResult<Self> {
+    pub fn init() -> Result<Self> {
         let event_loop = EventLoop::new();
 
         let window = WindowBuilder::new()

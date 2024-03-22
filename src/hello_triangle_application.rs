@@ -1,6 +1,6 @@
-use crate::app_result::AppResult;
 use crate::vulkan::AppVulkan;
 use crate::window::AppWindow;
+use anyhow::Result;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
@@ -29,7 +29,7 @@ pub struct HelloTriangleApplication {
 }
 
 impl HelloTriangleApplication {
-    pub fn new(enable_validation: bool) -> AppResult<Self> {
+    pub fn new(enable_validation: bool) -> Result<Self> {
         let AppWindow { event_loop, window } = AppWindow::init()?;
         let window = Arc::new(window);
         let AppVulkan {

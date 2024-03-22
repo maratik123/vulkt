@@ -1,5 +1,6 @@
-use crate::app_result::{AppError, AppResult};
+use crate::app_result::AppError;
 use crate::vulkan::debug::populate_debug_utils_messenger_create_info;
+use anyhow::Result;
 use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::iter;
@@ -13,7 +14,7 @@ use winit::event_loop::EventLoop;
 pub fn create_instance(
     event_loop: &EventLoop<()>,
     enable_validation: bool,
-) -> AppResult<Arc<Instance>> {
+) -> Result<Arc<Instance>> {
     let library = VulkanLibrary::new()?;
 
     let required_extensions = InstanceExtensions {
@@ -57,7 +58,7 @@ pub fn create_instance(
                         .chain(diff_it)
                         .collect::<SmallVec<[_; VALIDATION_LAYERS.len()]>>()
                 );
-                return Err(AppError::RequiredLayers);
+                Err(AppError::RequiredLayers)?
             }
         }
 

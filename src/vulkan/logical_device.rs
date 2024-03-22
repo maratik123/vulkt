@@ -1,6 +1,7 @@
-use crate::app_result::{AppError, AppResult, QueueFamilyType};
+use crate::app_result::{AppError, QueueFamilyType};
 use crate::vulkan::physical_device::DEVICE_EXTENSIONS;
 use crate::vulkan::QueueFamilyIndices;
+use anyhow::Result;
 use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -17,7 +18,7 @@ impl AppLogicalDevice {
     pub fn create(
         physical_device: &Arc<PhysicalDevice>,
         queue_family_indices: &QueueFamilyIndices,
-    ) -> AppResult<AppLogicalDevice> {
+    ) -> Result<AppLogicalDevice> {
         let queue_create_infos = HashSet::from([
             queue_family_indices.graphics_family,
             queue_family_indices.present_family,
@@ -43,11 +44,11 @@ impl AppLogicalDevice {
             queues: impl IntoIterator<Item = &'a Arc<Queue>>,
             queue_family_index: u32,
             queue_type: QueueFamilyType,
-        ) -> AppResult<Arc<Queue>> {
+        ) -> Result<Arc<Queue>> {
             Ok(queues
                 .into_iter()
                 .find(|queue| queue.queue_family_index() == queue_family_index)
-                .ok_or_else(|| AppError::QueueForDevice(queue_type))?
+                .ok_or(AppError::QueueForDevice(queue_type))?
                 .clone())
         }
 
