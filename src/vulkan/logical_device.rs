@@ -15,7 +15,7 @@ pub struct AppLogicalDevice {
 
 impl AppLogicalDevice {
     pub fn create(
-        physical_device: Arc<PhysicalDevice>,
+        physical_device: &Arc<PhysicalDevice>,
         queue_family_indices: &QueueFamilyIndices,
     ) -> AppResult<AppLogicalDevice> {
         let queue_create_infos = HashSet::from([
@@ -36,7 +36,7 @@ impl AppLogicalDevice {
             enabled_extensions: DEVICE_EXTENSIONS,
             ..DeviceCreateInfo::default()
         };
-        let (device, queues) = Device::new(physical_device, device_create_info)?;
+        let (device, queues) = Device::new(physical_device.clone(), device_create_info)?;
         let queues: SmallVec<[_; 2]> = queues.collect();
 
         fn find_queue<'a>(

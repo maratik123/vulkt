@@ -43,7 +43,7 @@ impl HelloTriangleApplication {
             swapchain,
             swapchain_images,
             swapchain_image_views,
-        } = AppVulkan::init(&event_loop, window.clone(), enable_validation)?;
+        } = AppVulkan::init(&event_loop, &window, enable_validation)?;
 
         Ok(Self {
             _swapchain_image_views: swapchain_image_views,

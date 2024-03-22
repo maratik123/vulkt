@@ -4,6 +4,7 @@ mod instance;
 mod logical_device;
 mod physical_device;
 mod queue_family_indices;
+mod shader;
 mod surface;
 mod swapchain;
 
@@ -43,31 +44,31 @@ pub struct AppVulkan {
 impl AppVulkan {
     pub fn init(
         event_loop: &EventLoop<()>,
-        window: Arc<Window>,
+        window: &Arc<Window>,
         enable_validation: bool,
     ) -> AppResult<Self> {
         let instance = create_instance(event_loop, enable_validation)?;
         let debug_utils_messenger = if enable_validation {
-            Some(setup_debug_messenger(instance.clone())?)
+            Some(setup_debug_messenger(&instance)?)
         } else {
             None
         };
-        let surface = create_surface(instance.clone(), window.clone())?;
+        let surface = create_surface(&instance, window)?;
         let (physical_device, queue_family_indices, swap_chain_support) =
             pick_physical_device(&instance, &surface)?;
         let AppLogicalDevice {
             device,
             graphics_queue,
             present_queue,
-        } = AppLogicalDevice::create(physical_device.clone(), &queue_family_indices)?;
+        } = AppLogicalDevice::create(&physical_device, &queue_family_indices)?;
         let (swapchain, swapchain_images) = swap_chain_support.create_swapchain(
-            device.clone(),
-            surface.clone(),
-            &window,
+            &device,
+            &surface,
+            window,
             &queue_family_indices,
         )?;
         let swapchain_image_views = create_image_views(&swapchain_images)?;
-        create_graphics_pipeline();
+        create_graphics_pipeline(&device)?;
 
         Ok(Self {
             instance,

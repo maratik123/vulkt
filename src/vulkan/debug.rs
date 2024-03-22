@@ -57,9 +57,9 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
 }
 
 #[inline]
-pub fn setup_debug_messenger(instance: Arc<Instance>) -> AppResult<DebugUtilsMessenger> {
+pub fn setup_debug_messenger(instance: &Arc<Instance>) -> AppResult<DebugUtilsMessenger> {
     Ok(DebugUtilsMessenger::new(
-        instance,
+        instance.clone(),
         populate_debug_utils_messenger_create_info(),
     )?)
 }

@@ -43,8 +43,8 @@ impl SwapChainSupportDetails {
 
     pub fn create_swapchain(
         self,
-        device: Arc<Device>,
-        surface: Arc<Surface>,
+        device: &Arc<Device>,
+        surface: &Arc<Surface>,
         window: &Window,
         queue_family_indices: &QueueFamilyIndices,
     ) -> AppResult<(Arc<Swapchain>, Vec<Arc<Image>>)> {
@@ -82,7 +82,11 @@ impl SwapChainSupportDetails {
             clipped: true,
             ..SwapchainCreateInfo::default()
         };
-        Ok(Swapchain::new(device, surface, swapchain_create_info)?)
+        Ok(Swapchain::new(
+            device.clone(),
+            surface.clone(),
+            swapchain_create_info,
+        )?)
     }
 }
 
@@ -121,9 +125,8 @@ fn choose_swap_extent(surface_capabilities: &SurfaceCapabilities, window: &Windo
 }
 
 pub fn create_image_views(swapchain_images: &[Arc<Image>]) -> AppResult<Vec<Arc<ImageView>>> {
-    swapchain_images
+    Ok(swapchain_images
         .iter()
         .map(|image| ImageView::new_default(image.clone()))
-        .collect::<Result<_, _>>()
-        .map_err(|e| e.into())
+        .collect::<Result<_, _>>()?)
 }
