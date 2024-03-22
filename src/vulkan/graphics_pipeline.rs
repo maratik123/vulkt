@@ -1,4 +1,4 @@
-use crate::app_result::AppError;
+use crate::app_error::AppError;
 use crate::vulkan::shader::{load_fragment, load_vertex};
 use anyhow::Result;
 use std::sync::Arc;

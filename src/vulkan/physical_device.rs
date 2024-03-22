@@ -1,4 +1,4 @@
-use crate::app_result::AppError;
+use crate::app_error::AppError;
 use crate::vulkan::swapchain::SwapChainSupportDetails;
 use crate::vulkan::QueueFamilyIndices;
 use anyhow::Result;

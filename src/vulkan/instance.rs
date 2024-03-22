@@ -1,4 +1,4 @@
-use crate::app_result::AppError;
+use crate::app_error::AppError;
 use crate::vulkan::debug::populate_debug_utils_messenger_create_info;
 use anyhow::Result;
 use smallvec::SmallVec;

@@ -1,4 +1,4 @@
-use crate::app_result::{AppError, QueueFamilyType};
+use crate::app_error::{AppError, QueueFamilyType};
 use crate::vulkan::physical_device::DEVICE_EXTENSIONS;
 use crate::vulkan::QueueFamilyIndices;
 use anyhow::Result;

@@ -1,4 +1,4 @@
-use crate::app_result::AppError;
+use crate::app_error::AppError;
 use crate::vulkan::queue_family_indices::QueueFamilyIndices;
 use anyhow::Result;
 use std::sync::Arc;
