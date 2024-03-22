@@ -1,5 +1,6 @@
-use crate::app_result::{AppError, AppResult};
+use crate::app_result::AppError;
 use crate::vulkan::queue_family_indices::QueueFamilyIndices;
+use anyhow::Result;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::Device;
@@ -20,7 +21,7 @@ pub struct SwapChainSupportDetails {
 }
 
 impl SwapChainSupportDetails {
-    pub fn query(physical_device: &PhysicalDevice, surface: &Surface) -> AppResult<Self> {
+    pub fn query(physical_device: &PhysicalDevice, surface: &Surface) -> Result<Self> {
         let capabilities = physical_device.surface_capabilities(surface, SurfaceInfo::default())?;
         let formats = physical_device
             .surface_formats(surface, SurfaceInfo::default())?
@@ -47,7 +48,7 @@ impl SwapChainSupportDetails {
         surface: &Arc<Surface>,
         window: &Window,
         queue_family_indices: &QueueFamilyIndices,
-    ) -> AppResult<(Arc<Swapchain>, Vec<Arc<Image>>)> {
+    ) -> Result<(Arc<Swapchain>, Vec<Arc<Image>>)> {
         let (image_format, image_color_space) = choose_swap_surface_format(self.formats)?;
         let present_mode = choose_swap_present_mode(self.present_modes);
         let image_extent = choose_swap_extent(&self.capabilities, window);
@@ -92,16 +93,16 @@ impl SwapChainSupportDetails {
 
 fn choose_swap_surface_format(
     available_formats: impl IntoIterator<Item = (Format, ColorSpace)>,
-) -> AppResult<(Format, ColorSpace)> {
+) -> Result<(Format, ColorSpace)> {
     let mut iter = available_formats.into_iter();
     let first = iter.next();
-    first
+    Ok(first
         .iter()
         .copied()
         .chain(iter)
         .find(|format| format == &(Format::B8G8R8A8_SRGB, ColorSpace::SrgbNonLinear))
         .or(first)
-        .ok_or(AppError::SwapChainFormatUnavailable)
+        .ok_or(AppError::SwapChainFormatUnavailable)?)
 }
 
 fn choose_swap_present_mode(
@@ -124,7 +125,7 @@ fn choose_swap_extent(surface_capabilities: &SurfaceCapabilities, window: &Windo
     }
 }
 
-pub fn create_image_views(swapchain_images: &[Arc<Image>]) -> AppResult<Vec<Arc<ImageView>>> {
+pub fn create_image_views(swapchain_images: &[Arc<Image>]) -> Result<Vec<Arc<ImageView>>> {
     Ok(swapchain_images
         .iter()
         .map(|image| ImageView::new_default(image.clone()))

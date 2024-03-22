@@ -8,7 +8,6 @@ mod shader;
 mod surface;
 mod swapchain;
 
-use crate::app_result::AppResult;
 use crate::vulkan::debug::setup_debug_messenger;
 use crate::vulkan::graphics_pipeline::create_graphics_pipeline;
 use crate::vulkan::instance::create_instance;
@@ -17,6 +16,7 @@ use crate::vulkan::physical_device::pick_physical_device;
 use crate::vulkan::queue_family_indices::QueueFamilyIndices;
 use crate::vulkan::surface::create_surface;
 use crate::vulkan::swapchain::create_image_views;
+use anyhow::Result;
 use std::sync::Arc;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::{Device, Queue};
@@ -46,7 +46,7 @@ impl AppVulkan {
         event_loop: &EventLoop<()>,
         window: &Arc<Window>,
         enable_validation: bool,
-    ) -> AppResult<Self> {
+    ) -> Result<Self> {
         let instance = create_instance(event_loop, enable_validation)?;
         let debug_utils_messenger = if enable_validation {
             Some(setup_debug_messenger(&instance)?)

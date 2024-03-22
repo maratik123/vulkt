@@ -1,4 +1,4 @@
-use crate::app_result::AppResult;
+use anyhow::Result;
 use std::sync::Arc;
 use tracing::{debug, error, info, trace, warn};
 use vulkano::instance::debug::{
@@ -57,7 +57,7 @@ fn debug_utils_messenger_callback() -> Arc<DebugUtilsMessengerCallback> {
 }
 
 #[inline]
-pub fn setup_debug_messenger(instance: &Arc<Instance>) -> AppResult<DebugUtilsMessenger> {
+pub fn setup_debug_messenger(instance: &Arc<Instance>) -> Result<DebugUtilsMessenger> {
     Ok(DebugUtilsMessenger::new(
         instance.clone(),
         populate_debug_utils_messenger_create_info(),

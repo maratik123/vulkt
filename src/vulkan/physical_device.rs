@@ -1,6 +1,7 @@
-use crate::app_result::{AppError, AppResult};
+use crate::app_result::AppError;
 use crate::vulkan::swapchain::SwapChainSupportDetails;
 use crate::vulkan::QueueFamilyIndices;
+use anyhow::Result;
 use std::sync::Arc;
 use tracing::warn;
 use vulkano::device::physical::PhysicalDevice;
@@ -11,12 +12,12 @@ use vulkano::swapchain::Surface;
 pub fn pick_physical_device(
     instance: &Arc<Instance>,
     surface: &Surface,
-) -> AppResult<(
+) -> Result<(
     Arc<PhysicalDevice>,
     QueueFamilyIndices,
     SwapChainSupportDetails,
 )> {
-    instance
+    Ok(instance
         .enumerate_physical_devices()?
         .filter(|physical_device| {
             physical_device
@@ -53,7 +54,7 @@ pub fn pick_physical_device(
                 }
             },
         )
-        .ok_or(AppError::PhysicalDevices)
+        .ok_or(AppError::PhysicalDevices)?)
 }
 
 pub const DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {

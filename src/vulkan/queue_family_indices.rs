@@ -1,4 +1,4 @@
-use crate::app_result::AppResult;
+use anyhow::Result;
 use tracing::info;
 use vulkano::device::physical::PhysicalDevice;
 use vulkano::device::QueueFlags;
@@ -14,7 +14,7 @@ impl QueueFamilyIndices {
     pub fn find(
         physical_device: &PhysicalDevice,
         surface: &Surface,
-    ) -> AppResult<Option<QueueFamilyIndices>> {
+    ) -> Result<Option<QueueFamilyIndices>> {
         let mut queue_family_indices = QueueFamilyIndicesBuilder::default();
         let mut last_err = None;
         for (i, prop) in physical_device.queue_family_properties().iter().enumerate() {
