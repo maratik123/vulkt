@@ -8,6 +8,7 @@ use vulkano::image::view::ImageView;
 use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
+use vulkano::pipeline::PipelineLayout;
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -26,6 +27,7 @@ pub struct HelloTriangleApplication {
     _swapchain: Arc<Swapchain>,
     _swapchain_images: Vec<Arc<Image>>,
     _swapchain_image_views: Vec<Arc<ImageView>>,
+    _pipeline_layout: Arc<PipelineLayout>,
 }
 
 impl HelloTriangleApplication {
@@ -43,9 +45,11 @@ impl HelloTriangleApplication {
             swapchain,
             swapchain_images,
             swapchain_image_views,
+            pipeline_layout,
         } = AppVulkan::init(&event_loop, &window, enable_validation)?;
 
         Ok(Self {
+            _pipeline_layout: pipeline_layout,
             _swapchain_image_views: swapchain_image_views,
             _swapchain_images: swapchain_images,
             _swapchain: swapchain,

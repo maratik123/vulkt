@@ -24,6 +24,7 @@ use vulkano::image::view::ImageView;
 use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
+use vulkano::pipeline::PipelineLayout;
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
@@ -39,6 +40,7 @@ pub struct AppVulkan {
     pub swapchain: Arc<Swapchain>,
     pub swapchain_images: Vec<Arc<Image>>,
     pub swapchain_image_views: Vec<Arc<ImageView>>,
+    pub pipeline_layout: Arc<PipelineLayout>,
 }
 
 impl AppVulkan {
@@ -68,7 +70,7 @@ impl AppVulkan {
             &queue_family_indices,
         )?;
         let swapchain_image_views = create_image_views(&swapchain_images)?;
-        create_graphics_pipeline(&device)?;
+        let pipeline_layout = create_graphics_pipeline(&device, &swapchain)?;
 
         Ok(Self {
             instance,
@@ -81,6 +83,7 @@ impl AppVulkan {
             swapchain,
             swapchain_images,
             swapchain_image_views,
+            pipeline_layout,
         })
     }
 }
