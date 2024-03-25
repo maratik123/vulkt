@@ -18,4 +18,6 @@ pub enum AppError {
     SwapChainFormatUnavailable,
     #[error("no entry point found")]
     EntryPointNotFound,
+    #[error("can not find subpass {0}")]
+    SubpassNotFound(u32),
 }

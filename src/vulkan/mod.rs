@@ -26,7 +26,7 @@ use vulkano::image::view::ImageView;
 use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
-use vulkano::pipeline::PipelineLayout;
+use vulkano::pipeline::{GraphicsPipeline, PipelineLayout};
 use vulkano::render_pass::RenderPass;
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event_loop::EventLoop;
@@ -45,6 +45,7 @@ pub struct AppVulkan {
     pub swapchain_image_views: Vec<Arc<ImageView>>,
     pub render_pass: Arc<RenderPass>,
     pub pipeline_layout: Arc<PipelineLayout>,
+    pub graphics_pipeline: Arc<GraphicsPipeline>,
 }
 
 impl AppVulkan {
@@ -74,8 +75,9 @@ impl AppVulkan {
             &queue_family_indices,
         )?;
         let swapchain_image_views = create_image_views(&swapchain_images)?;
-        let render_pass = create_render_pass(&device)?;
-        let pipeline_layout = create_graphics_pipeline(&device, &swapchain)?;
+        let render_pass = create_render_pass(&device, &swapchain)?;
+        let (pipeline_layout, graphics_pipeline) =
+            create_graphics_pipeline(&device, &swapchain, &render_pass)?;
 
         Ok(Self {
             instance,
@@ -90,6 +92,7 @@ impl AppVulkan {
             swapchain_image_views,
             render_pass,
             pipeline_layout,
+            graphics_pipeline,
         })
     }
 }

@@ -6,12 +6,17 @@ use vulkano::render_pass::{
     AttachmentDescription, AttachmentLoadOp, AttachmentReference, AttachmentStoreOp, RenderPass,
     RenderPassCreateInfo, SubpassDescription,
 };
+use vulkano::swapchain::Swapchain;
 
-pub fn create_render_pass(device: &Arc<Device>) -> Result<Arc<RenderPass>> {
+pub fn create_render_pass(
+    device: &Arc<Device>,
+    swapchain: &Arc<Swapchain>,
+) -> Result<Arc<RenderPass>> {
     let color_attachment = AttachmentDescription {
         load_op: AttachmentLoadOp::Clear,
         store_op: AttachmentStoreOp::Store,
         final_layout: ImageLayout::PresentSrc,
+        format: swapchain.image_format(),
         ..AttachmentDescription::default()
     };
     let attachment_reference = AttachmentReference {
