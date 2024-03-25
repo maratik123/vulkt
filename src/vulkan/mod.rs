@@ -4,6 +4,7 @@ mod instance;
 mod logical_device;
 mod physical_device;
 mod queue_family_indices;
+mod render_pass;
 mod shader;
 mod surface;
 mod swapchain;
@@ -14,6 +15,7 @@ use crate::vulkan::instance::create_instance;
 use crate::vulkan::logical_device::AppLogicalDevice;
 use crate::vulkan::physical_device::pick_physical_device;
 use crate::vulkan::queue_family_indices::QueueFamilyIndices;
+use crate::vulkan::render_pass::create_render_pass;
 use crate::vulkan::surface::create_surface;
 use crate::vulkan::swapchain::create_image_views;
 use anyhow::Result;
@@ -25,6 +27,7 @@ use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
 use vulkano::pipeline::PipelineLayout;
+use vulkano::render_pass::RenderPass;
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
@@ -40,6 +43,7 @@ pub struct AppVulkan {
     pub swapchain: Arc<Swapchain>,
     pub swapchain_images: Vec<Arc<Image>>,
     pub swapchain_image_views: Vec<Arc<ImageView>>,
+    pub render_pass: Arc<RenderPass>,
     pub pipeline_layout: Arc<PipelineLayout>,
 }
 
@@ -70,6 +74,7 @@ impl AppVulkan {
             &queue_family_indices,
         )?;
         let swapchain_image_views = create_image_views(&swapchain_images)?;
+        let render_pass = create_render_pass(&device)?;
         let pipeline_layout = create_graphics_pipeline(&device, &swapchain)?;
 
         Ok(Self {
@@ -83,6 +88,7 @@ impl AppVulkan {
             swapchain,
             swapchain_images,
             swapchain_image_views,
+            render_pass,
             pipeline_layout,
         })
     }

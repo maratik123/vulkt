@@ -9,6 +9,7 @@ use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
 use vulkano::pipeline::PipelineLayout;
+use vulkano::render_pass::RenderPass;
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -27,6 +28,7 @@ pub struct HelloTriangleApplication {
     _swapchain: Arc<Swapchain>,
     _swapchain_images: Vec<Arc<Image>>,
     _swapchain_image_views: Vec<Arc<ImageView>>,
+    _render_pass: Arc<RenderPass>,
     _pipeline_layout: Arc<PipelineLayout>,
 }
 
@@ -45,23 +47,25 @@ impl HelloTriangleApplication {
             swapchain,
             swapchain_images,
             swapchain_image_views,
+            render_pass,
             pipeline_layout,
         } = AppVulkan::init(&event_loop, &window, enable_validation)?;
 
         Ok(Self {
-            _pipeline_layout: pipeline_layout,
-            _swapchain_image_views: swapchain_image_views,
-            _swapchain_images: swapchain_images,
-            _swapchain: swapchain,
-            _present_queue: present_queue,
-            _graphics_queue: graphics_queue,
-            _device: device,
-            _physical_device: physical_device,
-            _surface: surface,
-            _debug_utils_messenger: debug_utils_messenger,
-            _instance: instance,
-            window,
             event_loop,
+            window,
+            _instance: instance,
+            _debug_utils_messenger: debug_utils_messenger,
+            _surface: surface,
+            _physical_device: physical_device,
+            _device: device,
+            _graphics_queue: graphics_queue,
+            _present_queue: present_queue,
+            _swapchain: swapchain,
+            _swapchain_images: swapchain_images,
+            _swapchain_image_views: swapchain_image_views,
+            _render_pass: render_pass,
+            _pipeline_layout: pipeline_layout,
         })
     }
 
