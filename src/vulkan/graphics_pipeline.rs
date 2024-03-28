@@ -71,16 +71,17 @@ pub fn create_graphics_pipeline(
 
     let multisampling = MultisampleState::default();
 
-    let color_blend_attachment = ColorBlendAttachmentState {
-        ..ColorBlendAttachmentState::default()
-    };
+    let color_blend_attachment = ColorBlendAttachmentState::default();
 
     let subpass_id = 0;
 
     let subpass = Subpass::from(render_pass.clone(), subpass_id)
         .ok_or(AppError::SubpassNotFound(subpass_id))?;
 
-    let color_blending = ColorBlendState::with_attachment_states(1, color_blend_attachment);
+    let color_blending = ColorBlendState::with_attachment_states(
+        subpass.num_color_attachments(),
+        color_blend_attachment,
+    );
 
     let pipeline_layout_info = PipelineLayoutCreateInfo::default();
 
