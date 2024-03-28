@@ -15,7 +15,7 @@ use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
 
-pub struct HelloTriangleApplication {
+pub struct Application {
     event_loop: EventLoop<()>,
     window: Arc<Window>,
     _instance: Arc<Instance>,
@@ -34,7 +34,7 @@ pub struct HelloTriangleApplication {
     _framebuffers: Vec<Arc<Framebuffer>>,
 }
 
-impl HelloTriangleApplication {
+impl Application {
     pub fn new(enable_validation: bool) -> Result<Self> {
         let AppWindow { event_loop, window } = AppWindow::init()?;
         let window = Arc::new(window);

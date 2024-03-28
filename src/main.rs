@@ -1,6 +1,6 @@
 use clap::Parser;
 use tracing::info;
-use vulkt::hello_triangle_application::HelloTriangleApplication;
+use vulkt::application::Application;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -17,7 +17,7 @@ fn main() -> ! {
 
     info!("validation status: {}", args.validate);
 
-    let app = HelloTriangleApplication::new(args.validate).expect("Can not create app");
+    let app = Application::new(args.validate).expect("Can not create app");
 
     app.run()
 }

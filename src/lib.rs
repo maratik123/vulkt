@@ -1,4 +1,4 @@
 pub mod app_error;
-pub mod hello_triangle_application;
+pub mod application;
 mod vulkan;
 mod window;
