@@ -1,4 +1,5 @@
 mod debug;
+mod framebuffers;
 mod graphics_pipeline;
 mod instance;
 mod logical_device;
@@ -10,6 +11,7 @@ mod surface;
 mod swapchain;
 
 use crate::vulkan::debug::setup_debug_messenger;
+use crate::vulkan::framebuffers::create_framebuffers;
 use crate::vulkan::graphics_pipeline::create_graphics_pipeline;
 use crate::vulkan::instance::create_instance;
 use crate::vulkan::logical_device::AppLogicalDevice;
@@ -27,7 +29,7 @@ use vulkano::image::Image;
 use vulkano::instance::debug::DebugUtilsMessenger;
 use vulkano::instance::Instance;
 use vulkano::pipeline::{GraphicsPipeline, PipelineLayout};
-use vulkano::render_pass::RenderPass;
+use vulkano::render_pass::{Framebuffer, RenderPass};
 use vulkano::swapchain::{Surface, Swapchain};
 use winit::event_loop::EventLoop;
 use winit::window::Window;
@@ -46,6 +48,7 @@ pub struct AppVulkan {
     pub render_pass: Arc<RenderPass>,
     pub pipeline_layout: Arc<PipelineLayout>,
     pub graphics_pipeline: Arc<GraphicsPipeline>,
+    pub framebuffers: Vec<Arc<Framebuffer>>,
 }
 
 impl AppVulkan {
@@ -78,6 +81,7 @@ impl AppVulkan {
         let render_pass = create_render_pass(&device, &swapchain)?;
         let (pipeline_layout, graphics_pipeline) =
             create_graphics_pipeline(&device, &swapchain, &render_pass)?;
+        let framebuffers = create_framebuffers(&render_pass, &swapchain_image_views)?;
 
         Ok(Self {
             instance,
@@ -93,6 +97,7 @@ impl AppVulkan {
             render_pass,
             pipeline_layout,
             graphics_pipeline,
+            framebuffers,
         })
     }
 }
